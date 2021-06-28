@@ -1,2 +1,2 @@
 # Go
-Start of training and examples/
+Start of training and examples
