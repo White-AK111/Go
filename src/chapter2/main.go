@@ -6,8 +6,7 @@ import (
 	"os/user"
 )
 
-// this is a comment
-
+//hello world
 func main() {
 	//usr := *user.User
 	//fmt.Println("Hello World " + user.Current(usr, ""))
