@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+//управление потоком
 func main() {
 	count := 10
 
