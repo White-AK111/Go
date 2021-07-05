@@ -1,3 +1,3 @@
-module src/chapter4
+module src/golang_book/chapter4
 
 go 1.16
