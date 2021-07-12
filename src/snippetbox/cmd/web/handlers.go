@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"text/template"
 )
 
 // Обработчик главной страницы.
-func home(w http.ResponseWriter, r *http.Request) {
+// Меняем сигнатуры обработчика home, чтобы он определялся как метод
+// структуры *application.
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// Проверяется, если текущий путь URL запроса точно совпадает с шаблоном "/". Если нет, вызывается
 	// функция http.NotFound() для возвращения клиенту ошибки 404.
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		app.notFound(w) // Использование помощника notFound()
+		//http.NotFound(w, r)
 		return
 	}
 
@@ -31,8 +33,13 @@ func home(w http.ResponseWriter, r *http.Request) {
 	// ответ: 500 Internal Server Error (Внутренняя ошибка на сервере)
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		// Поскольку обработчик home теперь является методом структуры application
+		// он может получить доступ к логгерам из структуры.
+		// Используем их вместо стандартного логгера от Go.
+		//log.Println(err.Error())
+		app.errorLog.Println(err.Error())
+		app.serverError(w, err) // Использование помощника serverError()
+		//http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -41,20 +48,27 @@ func home(w http.ResponseWriter, r *http.Request) {
 	// возможность отправки динамических данных в шаблон.
 	err = ts.Execute(w, nil)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		// Обновляем код для использования логгера-ошибок
+		// из структуры application.
+		//log.Println(err.Error())
+		app.errorLog.Println(err.Error())
+		app.serverError(w, err) // Использование помощника serverError()
+		//http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 // Обработчик для отображения содержимого заметки.
-func showSnippet(w http.ResponseWriter, r *http.Request) {
+// Меняем сигнатуру обработчика showSnippet, чтобы он был определен как метод
+// структуры *application
+func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// Извлекаем значение параметра id из URL и попытаемся
 	// конвертировать строку в integer используя функцию strconv.Atoi(). Если его нельзя
 	// конвертировать в integer, или значение меньше 1, возвращаем ответ
 	// 404 - страница не найдена!
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		app.notFound(w) // Использование помощника notFound()
+		//http.NotFound(w, r)
 		return
 	}
 
@@ -65,7 +79,9 @@ func showSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 // Обработчик для создания новой заметки.
-func createSnippet(w http.ResponseWriter, r *http.Request) {
+// Меняем сигнатуру обработчика createSnippet, чтобы он определялся как метод
+// структуры *application.
+func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method для проверки, использует ли запрос метод POST или нет. Обратите внимание,
 	// что http.MethodPost является строкой и содержит текст "POST".
 	if r.Method != http.MethodPost {
@@ -84,7 +100,8 @@ func createSnippet(w http.ResponseWriter, r *http.Request) {
 		*/
 
 		//через Error
-		http.Error(w, "Метод запрещён!", http.StatusMethodNotAllowed)
+		app.clientError(w, http.StatusMethodNotAllowed) // Используем помощник clientError()
+		//http.Error(w, "Метод запрещён!", http.StatusMethodNotAllowed)
 
 		// Затем мы завершаем работу функции вызвав "return", чтобы
 		// последующий код не выполнялся.
