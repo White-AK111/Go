@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"text/template"
+
+	"White-AK111/snippetbox/pkg/models"
 )
 
 // Обработчик главной страницы.
@@ -19,6 +22,18 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	/* Тест функции .Latest()
+	s, err := app.snippets.Latest()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	for _, snippet := range s {
+		fmt.Fprintf(w, "%v\n", snippet)
+	}
+
+	*/
 	// Инициализируем срез содержащий пути к файлам шаблонов. Обратите внимание, что
 	// файл home.page.tmpl должен быть *первым* файлом в срезе.
 	files := []string{
@@ -72,9 +87,25 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Вызываем метода Get из модели Snipping для извлечения данных для
+	// конкретной записи на основе её ID. Если подходящей записи не найдено,
+	// то возвращается ответ 404 Not Found (Страница не найдена).
+	s, err := app.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	// Отображаем весь вывод на странице.
+	fmt.Fprintf(w, "%v", s)
+
 	// Используем функцию fmt.Fprintf() для вставки значения из id в строку ответа
 	// и записываем его в http.ResponseWriter.
-	fmt.Fprintf(w, "Отображение выбранной заметки с ID %d...", id)
+	//fmt.Fprintf(w, "Отображение выбранной заметки с ID %d...", id)
 	//w.Write([]byte("Отображение заметки..."))
 }
 
@@ -107,5 +138,22 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		// последующий код не выполнялся.
 		return
 	}
+
+	// Создаем несколько переменных, содержащих тестовые данные. Мы удалим их позже.
+	title := "История про улитку"
+	content := "Улитка выползла из раковины,\nвытянула рожки,\nи опять подобрала их."
+	expires := "7"
+
+	// Передаем данные в метод SnippetModel.Insert(), получая обратно
+	// ID только что созданной записи в базу данных.
+	id, err := app.snippets.Insert(title, content, expires)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// Перенаправляем пользователя на соответствующую страницу заметки.
+	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+
 	w.Write([]byte("Форма для создания новой заметки..."))
 }
