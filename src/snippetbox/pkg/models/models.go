@@ -7,8 +7,9 @@ import (
 
 var ErrNoRecord = errors.New("models: подходящей записи не найдено")
 
+// Структура модели данных
 type Snippet struct {
-	ID      int
+	Id      int
 	Title   string
 	Content string
 	Created time.Time
