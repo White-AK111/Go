@@ -4,5 +4,16 @@
  
 {{define "main"}}
 <h2>Последние заметки</h2>
-<p>Пока здесь ничего нет!</p>
+    <table>
+        <thead><th>Id</th><th>Название</th><th>Содержание</th><th>Создано</th><th>Истекает</th></thead>
+        {{range .}}
+            <tr>
+                <td>{{.Id}}</td>
+                <td>{{.Title}}</td>
+                <td>{{.Content}}</td>
+                <td>{{.Created}}</td>
+                <td>{{.Expires}}</td>
+            </tr>
+        {{end}}
+    </table>
 {{end}}

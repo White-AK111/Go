@@ -16,12 +16,10 @@ func (app *application) routes() *http.ServeMux {
 
 	// Инициализируем FileServer, он будет обрабатывать
 	// HTTP-запросы к статическим файлам из папки "./ui/static".
-	// Обратите внимание, что переданный в функцию http.Dir путь
-	// является относительным корневой папке проекта
-	//fileServer := http.FileServer(http.Dir("../../ui/static/"))
+	// Используем настраиваемую файловую систему.
 	fileServer := http.FileServer(neuteredFileSystem{http.Dir("../../ui/static/")})
 	// Используем функцию mux.Handle() для регистрации обработчика для
-	// всех запросов, которые начинаются с "/static/". Мы убираем
+	// всех запросов, которые начинаются с "/static/". Убираем
 	// префикс "/static" перед тем как запрос достигнет http.FileServer
 	mux.Handle("/static", http.NotFoundHandler())
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
@@ -29,10 +27,15 @@ func (app *application) routes() *http.ServeMux {
 	return mux
 }
 
+// Структура настраиваемой файловой системуы
 type neuteredFileSystem struct {
 	fs http.FileSystem
 }
 
+// Если файл index.html не существует, то метод вернет ошибку os.ErrNotExist
+// (которая, в свою очередь, будет преобразована через http.FileServer в ответ 404 страница не найдена).
+// Также вызываем метод Close() для закрытия только, что открытого index.html файла, чтобы избежать утечки файлового дескриптора.
+// Во всех остальных случаях мы просто возвращаем файл и даем http.FileServer сделать то, что он должен.
 func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
 	f, err := nfs.fs.Open(path)
 	if err != nil {
@@ -40,10 +43,7 @@ func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
 	}
 
 	s, err := f.Stat()
-	if s.IsDir() {
-		//Если делать как в примере, то формируется некорректный путь + некорректно обрабатывается ошибка.
-		//И в тоге web-сервер падает в ошибку.
-		//index := filepath.Join(path, "index.html")
+	if s.IsDir() && err != nil {
 		index := "index.html"
 		if _, err := nfs.fs.Open(index); err == nil {
 			closeErr := f.Close()

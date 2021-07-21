@@ -22,7 +22,7 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-// Мы также реализуем помощник notFound. Это просто
+// Помощник notFound. Это просто
 // удобная оболочка вокруг clientError, которая отправляет пользователю ответ "404 Страница не найдена".
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)

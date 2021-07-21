@@ -26,9 +26,6 @@ func (m *SnippetModel) Insert(title, content, expires string) (int, error) {
 		return 0, err
 	}
 
-	//игнорировать возвращаемое значение
-	//_, err := m.DB.Exec("INSERT INTO ...", ...)
-
 	// Используем метод LastInsertId(), чтобы получить последний ID
 	// созданной записи из таблицу snippets.
 	id, err := result.LastInsertId()
@@ -55,14 +52,14 @@ func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
 	// Инициализируем указатель на новую структуру Snippet.
 	s := &models.Snippet{}
 
-	// Используйте row.Scan(), чтобы скопировать значения из каждого поля от sql.Row в
-	// соответствующее поле в структуре Snippet. Обратите внимание, что аргументы
+	// Используем row.Scan(), чтобы скопировать значения из каждого поля от sql.Row в
+	// соответствующее поле в структуре Snippet. Аргументы
 	// для row.Scan - это указатели на место, куда требуется скопировать данные
 	// и количество аргументов должно быть точно таким же, как количество
 	// столбцов в таблице базы данных.
-	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+	err := row.Scan(&s.Id, &s.Title, &s.Content, &s.Created, &s.Expires)
 	if err != nil {
-		// Специально для этого случая, мы проверим при помощи функции errors.Is()
+		// Специально для этого случая, проверим при помощи функции errors.Is()
 		// если запрос был выполнен с ошибкой. Если ошибка обнаружена, то
 		// возвращаем нашу ошибку из модели models.ErrNoRecord.
 		if errors.Is(err, sql.ErrNoRows) {
@@ -78,7 +75,7 @@ func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
 
 // Latest - Метод возвращает 10 наиболее часто используемые заметки.
 func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
-	// Пишем SQL запрос, который мы хотим выполнить.
+	// SQL запрос, возвращает 10 послених записей.
 	stmt := `SELECT id, title, content, created, expires FROM snippets
 WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 10`
 
@@ -100,7 +97,7 @@ WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 10`
 	var snippets []*models.Snippet
 
 	// Используем rows.Next() для перебора результата. Этот метод предоставляем
-	// первый а затем каждую следующею запись из базы данных для обработки
+	// первый а затем каждую следующую запись из базы данных для обработки
 	// методом rows.Scan().
 	for rows.Next() {
 		// Создаем указатель на новую структуру Snippet
@@ -110,10 +107,13 @@ WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 10`
 		// должны быть указателями на место, куда требуется скопировать данные и
 		// количество аргументов должно быть точно таким же, как количество
 		// столбцов из таблицы базы данных, возвращаемых вашим SQL запросом.
-		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+		err = rows.Scan(&s.Id, &s.Title, &s.Content, &s.Created, &s.Expires)
 		if err != nil {
 			return nil, err
 		}
+
+		//&s.Created = *s.Created.Format("02.01.2006 15:04:05")
+
 		// Добавляем структуру в срез.
 		snippets = append(snippets, s)
 	}
