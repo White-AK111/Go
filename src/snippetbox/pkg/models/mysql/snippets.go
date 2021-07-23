@@ -77,7 +77,7 @@ func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
 func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
 	// SQL запрос, возвращает 10 послених записей.
 	stmt := `SELECT id, title, content, created, expires FROM snippets
-WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 10`
+WHERE DATE_ADD(expires, INTERVAL 3 HOUR) > DATE_ADD(UTC_TIMESTAMP(), INTERVAL 3 HOUR) ORDER BY created DESC LIMIT 10`
 
 	// Используем метод Query() для выполнения нашего SQL запроса.
 	// В ответ мы получим sql.Rows, который содержит результат нашего запроса.
