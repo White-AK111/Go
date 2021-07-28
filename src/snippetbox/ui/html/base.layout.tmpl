@@ -15,11 +15,21 @@
             <h1><a href='/'>Хранилище заметок</a></h1>
         </header>
         <nav>
-            <a href='/'>Домашняя страница</a>
+            <div>
+                <a href='/'>Домашняя страница</a>
+                <a href='/snippet/create'>Создать заметку</a>
+            </div>
+            <div>
+              <a href='/user/signup'>Зарегистрироваться</a>
+              <a href='/user/login'>Войти</a>
+                <form action='/user/logout' method='POST'>
+                    <button>Выйти</button> 
+                </form>
+            </div>
         </nav>
-        <main>
-            {{template "main" .}}
-        </main>
+        <section>
+            {{template "body" .}}
+        </section>
         <!-- Вызываем шаблон подвала -->
         {{template "footer" .}}
         <!-- Подключаем JS чтобы сделать сайт более динамичным -->
