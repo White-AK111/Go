@@ -2,18 +2,24 @@
  
 {{define "title"}}Домашняя страница{{end}}
  
-{{define "main"}}
+{{define "body"}}
 <h2>Последние заметки</h2>
+{{if .Snippets}}
     <table>
-        <thead><th>Id</th><th>Название</th><th>Содержание</th><th>Создано</th><th>Истекает</th></thead>
-        {{range .}}
+        <thead>
+            <th>Id</th>
+            <th>Название</th>
+            <th>Создано</th>
+        </thead>
+        {{range .Snippets}}
             <tr>
-                <td>{{.Id}}</td>
-                <td>{{.Title}}</td>
-                <td>{{.Content}}</td>
+                <td>№{{.Id}}</td>
+                <td><a href='/snippet?id={{.Id}}'>{{.Title}}</a></td>
                 <td class="utcDate">{{.Created}}</td>
-                <td class="utcDate">{{.Expires}}</td>
             </tr>
         {{end}}
     </table>
+        {{else}}
+        <p>У Вас пока нет никаких заметок!</p>
+    {{end}}
 {{end}}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"White-AK111/snippetbox/pkg/models"
 )
@@ -21,40 +20,17 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Инициализируем срез содержащий пути к файлам шаблонов.
-	// Файл home.page.tmpl должен быть *первым* файлом в срезе.
-	files := []string{
-		"../../ui/html/home.page.tmpl",
-		"../../ui/html/base.layout.tmpl",
-		"../../ui/html/footer.partial.tmpl",
-	}
-
-	// Используем функцию template.ParseFiles() для чтения файлов шаблона.
-	// Если возникла ошибка, мы запишем детальное сообщение ошибки и
-	// отправим пользователю
-	// ответ: 500 Internal Server Error (Внутренняя ошибка на сервере)
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.errorLog.Println(err.Error())
-		app.serverError(w, err)
-		return
-	}
-
-	//Выводим последние земетки из БД
+	// Получаем последние земетки из БД
 	s, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	// Используем метод Execute() для записи содержимого
-	// шаблона в тело HTTP ответа. Последний параметр в Execute() предоставляет
-	// возможность отправки динамических данных в шаблон.
-	err = ts.Execute(w, s)
-	if err != nil {
-		app.errorLog.Println(err.Error())
-		app.serverError(w, err)
-	}
+	//Заполняем шаблон, отрисовываем страницу
+	app.render(w, r, "home.page.tmpl", &templateData{
+		Snippets: s,
+	})
 }
 
 // Обработчик для отображения содержимого заметки.
@@ -82,8 +58,10 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Отображаем весь вывод на странице.
-	fmt.Fprintf(w, "%v", s)
+	//Заполняем шаблон, отрисовываем страницу
+	app.render(w, r, "show.page.tmpl", &templateData{
+		Snippet: s,
+	})
 }
 
 // Обработчик для создания новой заметки.

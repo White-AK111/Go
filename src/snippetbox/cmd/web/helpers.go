@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 // Помощник serverError записывает сообщение об ошибке в errorLog и
@@ -26,4 +28,37 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 // удобная оболочка вокруг clientError, которая отправляет пользователю ответ "404 Страница не найдена".
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
+}
+
+// Обработка (рендер) шаблона, возврат обраьотанного шаблона
+func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
+
+	ts, ok := app.templateCache[name]
+
+	if !ok {
+		app.serverError(w, fmt.Errorf("Шаблон %s не существует!", name))
+		return
+	}
+
+	buf := new(bytes.Buffer)
+
+	err := ts.Execute(buf, app.addDefaultData(td, r))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	buf.WriteTo(w)
+}
+
+// Функция добавления данных по умолчнию в шаблон
+func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
+
+	if td == nil {
+		td = &templateData{}
+	}
+
+	td.CurrentYear = time.Now().Year()
+	//td.Flash = app.session.PopString(r, "flash")
+	return td
 }
