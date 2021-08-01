@@ -30,7 +30,7 @@ func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
 
-// Обработка (рендер) шаблона, возврат обраьотанного шаблона
+// Обработка (рендер) шаблона, возврат обработанного шаблона в ответ на запрос.
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
 
 	ts, ok := app.templateCache[name]
@@ -51,7 +51,7 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	buf.WriteTo(w)
 }
 
-// Функция добавления данных по умолчнию в шаблон
+// Функция добавления данных по умолчнию в шаблон.
 func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
 
 	if td == nil {
