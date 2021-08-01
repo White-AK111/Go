@@ -10,7 +10,7 @@ import (
 )
 
 // Обработчик главной страницы.
-// Меняем сигнатуры обработчика home, чтобы он определялся как метод
+// Меняем сигнатуры обработчика home, чтобы он определялся как метод.
 // структуры *application.
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// Проверяется, если текущий путь URL запроса точно совпадает с шаблоном "/". Если нет, вызывается
@@ -20,14 +20,14 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем последние земетки из БД
+	// Получаем последние земетки из БД.
 	s, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	//Заполняем шаблон, отрисовываем страницу
+	// Заполняем шаблон, отрисовываем страницу.
 	app.render(w, r, "home.page.tmpl", &templateData{
 		Snippets: s,
 	})
@@ -58,7 +58,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//Заполняем шаблон, отрисовываем страницу
+	// Заполняем шаблон, отрисовываем страницу.
 	app.render(w, r, "show.page.tmpl", &templateData{
 		Snippet: s,
 	})
