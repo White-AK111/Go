@@ -3,6 +3,7 @@ package millionfiles
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,7 +15,7 @@ func createFile(i int, dir string) {
 	fileName := strconv.Itoa(i) + ext
 	f, err := os.Create(filepath.Join(dir, fileName))
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error on create file: %s", err)
 	}
 	defer f.Close()
 	fmt.Printf("File created:%s\n", fileName)
@@ -31,8 +32,7 @@ func CreateMillionFiles(dir string) (err error) {
 
 	err = removeContents(dir)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("Error on delete files: %s", err)
 	}
 
 	for i := 1; i <= 1000000; i++ {
