@@ -1,6 +1,7 @@
 package millionfiles
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
@@ -14,4 +15,13 @@ func TestCreateMillionFiles(t *testing.T) {
 
 	files, _ := ioutil.ReadDir(dir)
 	assert.Equal(t, 1000000, files, "Incorrect number of files expected 1 000 000 got %d", len(files))
+}
+
+func ExampleCreateMillionFiles() {
+	dir := "/home/white/MillionFiles"
+	err := CreateMillionFiles(dir)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// Output: one million empty "*.txt" files in directory "dir" or error if it exists.
 }
