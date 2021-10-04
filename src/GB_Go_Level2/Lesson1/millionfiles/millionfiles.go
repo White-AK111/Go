@@ -1,3 +1,7 @@
+// Package millionfiles demonstrates using defer() mechanism and catch panic by using recover() mechanism.
+// Function CreateMillionFiles delete all files in said directory and create one million empty "*.txt" files in this directory.
+//
+// So, you can use CreateMillionFiles function for create one million empty "*.txt" files without get panic.
 package millionfiles
 
 import (
@@ -9,7 +13,7 @@ import (
 	"strconv"
 )
 
-// createFile create file in directory
+// createFile create file like "i.txt" (where "i" is index) in directory "dir".
 func createFile(i int, dir string) {
 	ext := ".txt"
 	fileName := strconv.Itoa(i) + ext
@@ -21,7 +25,7 @@ func createFile(i int, dir string) {
 	fmt.Printf("File created:%s\n", fileName)
 }
 
-// CreateMillionFiles create 1M files in directory
+// CreateMillionFiles delete all files in directory "dir" and create one million empty "*.txt" files in this directory, return error.
 func CreateMillionFiles(dir string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -42,7 +46,7 @@ func CreateMillionFiles(dir string) (err error) {
 	return err
 }
 
-// removeContents remove all files from directory
+// removeContents remove all files from directory "dir", return error.
 func removeContents(dir string) error {
 	d, err := os.Open(dir)
 	if err != nil {
