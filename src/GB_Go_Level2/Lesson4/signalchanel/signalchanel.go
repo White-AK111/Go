@@ -17,10 +17,15 @@ func TreatmentSignal() error {
 	ctxTimeout, cancel := context.WithTimeout(ctxNotify, time.Second*1)
 	defer cancel()
 
+	//wg := sync.WaitGroup{}
+	//defer wg.Wait()
+
 	// do something endlessly
+	//wg.Add(1)
 	go func() {
-		for i := 0; i >= 0; i++ {
+		for {
 		}
+		//wg.Done()
 	}()
 
 	// send SIGNTERM signal in to signal channel
@@ -33,7 +38,11 @@ func TreatmentSignal() error {
 		return ctxTimeout.Err()
 	case <-ctxNotify.Done():
 		return ctxNotify.Err()
+		//default:
+		//wg.Wait()
 	}
+
+	return nil
 }
 
 // sendSignTerm send SIGNTERM signal to current process
