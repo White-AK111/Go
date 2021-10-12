@@ -1,8 +1,11 @@
-// Package exgenerator
+// Package generator
 // Task#3
 // *не обязательное*. Написать кодогенератор под какую-нибудь задачу.
-//go:generate exgenerator.go MyInt
-package exgenerator
+//go:generate go run generator.go MyInt
+
+// This program generates {{MyType}}_queue.go. It can be invoked by running
+// go generate
+package main
 
 import (
 	"fmt"
@@ -21,6 +24,10 @@ var tpl = `package {{.Package}}
 		return &{{.MyType}}Queue{
 			q: []{{.MyType}}{},
 		}
+	}
+
+	func (o *{{.MyType}}Queue) Insert(v {{.MyType}}) {
+		o.q = append(o.q, v)
 	}
 `
 

@@ -1,4 +1,3 @@
-//go:generate exgenerator/exgenerator.go MyInt
 package main
 
 import (
@@ -39,6 +38,7 @@ func main() {
 	fmt.Printf("Count of go func execute: %d\n", n)
 
 	// Task#3
-	//var one MyInt = 1
-	//q := NewMyIntQueue()
+	var one MyInt = 1
+	q := NewMyIntQueue()
+	q.Insert(one)
 }
