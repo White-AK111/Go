@@ -18,24 +18,22 @@ import (
 	"flag"
 	"github.com/White-AK111/GB_Go_Level2/Lesson8/config"
 	"github.com/White-AK111/GB_Go_Level2/Lesson8/filework"
-	"log"
 )
 
 func main() {
-	//dir := "/home/white/Files"
-	//dir := "../../../../../Files"
-
 	app := config.NewApp()
 	app.Init()
 	flag.Parse()
 
-	err := filework.DoDuplicateFiles(*app)
+	err := filework.DoDuplicateFiles(app)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		app.ErrorLogger.Fatalf("Error: %s", err)
 	}
 
-	err = filework.DoRandomCopyFiles(*app)
-	if err != nil {
-		log.Fatalf("Error: %s", err)
+	if app.FlagRandCopy {
+		err = filework.DoRandomCopyFiles(app)
+		if err != nil {
+			app.ErrorLogger.Fatalf("Error: %s", err)
+		}
 	}
 }

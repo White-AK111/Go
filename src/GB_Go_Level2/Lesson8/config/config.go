@@ -5,25 +5,27 @@ import (
 	"flag"
 	"hash"
 	"log"
+	"os"
+	"path/filepath"
 )
 
 type App struct {
-	//Pool          chan struct{}
-	//WG            sync.WaitGroup
-	//MU            sync.Mutex
-	HashAlgorithm hash.Hash
-	ErrorLogger   *log.Logger
-	SourcePath    string
-	FlagDelete    bool
-	FlagRandCopy  bool
+	HashAlgorithm    hash.Hash
+	ErrorLogger      *log.Logger
+	SourcePath       string
+	CountGoroutine   int
+	CountRndCopyIter int
+	FlagDelete       bool
+	FlagRandCopy     bool
 }
 
 func NewApp() *App {
 	return &App{
-		//WG:           sync.WaitGroup{},
-		SourcePath:   ".",
-		FlagDelete:   false,
-		FlagRandCopy: false,
+		SourcePath:       ".",
+		CountGoroutine:   1000,
+		CountRndCopyIter: 100,
+		FlagDelete:       false,
+		FlagRandCopy:     false,
 	}
 }
 
@@ -35,14 +37,42 @@ func (a *App) Init() {
 		usageGo   = "use this flag for set max count of goroutines"
 	)
 
-	countGo := 1
-
 	flag.StringVar(&a.SourcePath, "path", a.SourcePath, usagePath)
 	flag.BoolVar(&a.FlagDelete, "rm", a.FlagDelete, usageRm)
 	flag.BoolVar(&a.FlagRandCopy, "cp", a.FlagRandCopy, usageCp)
-	flag.IntVar(&countGo, "go", 1, usageGo)
+	flag.IntVar(&a.CountGoroutine, "go", a.CountGoroutine, usageGo)
 
-	//a.Pool = make(chan struct{}, countGo)
+	a.ErrorLogger = NewBuiltinLogger().logger
 	a.SourcePath = "/home/white/Files"
 	a.HashAlgorithm = sha256.New()
+	if err := a.setABSPath(); err != nil {
+		a.ErrorLogger.Printf("error on get ABS path from source path %q: %v\n", a.SourcePath, err)
+	}
+}
+
+func (a *App) setABSPath() error {
+	// get absolut filepath for source path
+	sourcePath, err := filepath.Abs(a.SourcePath)
+	if err != nil {
+		return err
+	}
+	a.SourcePath = sourcePath
+
+	return nil
+}
+
+type BuiltinLogger struct {
+	logger *log.Logger
+}
+
+func NewBuiltinLogger() *BuiltinLogger {
+	return &BuiltinLogger{logger: log.New(os.Stdout, "", 5)}
+}
+
+func (l *BuiltinLogger) Debug(args ...interface{}) {
+	l.logger.Println(args...)
+}
+
+func (l *BuiltinLogger) Debugf(format string, args ...interface{}) {
+	l.logger.Printf(format, args...)
 }
