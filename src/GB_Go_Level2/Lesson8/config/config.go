@@ -5,13 +5,12 @@ import (
 	"flag"
 	"hash"
 	"log"
-	"sync"
 )
 
 type App struct {
-	Pool          chan struct{}
-	WG            sync.WaitGroup
-	MU            sync.Mutex
+	//Pool          chan struct{}
+	//WG            sync.WaitGroup
+	//MU            sync.Mutex
 	HashAlgorithm hash.Hash
 	ErrorLogger   *log.Logger
 	SourcePath    string
@@ -21,7 +20,7 @@ type App struct {
 
 func NewApp() *App {
 	return &App{
-		WG:           sync.WaitGroup{},
+		//WG:           sync.WaitGroup{},
 		SourcePath:   ".",
 		FlagDelete:   false,
 		FlagRandCopy: false,
@@ -43,7 +42,7 @@ func (a *App) Init() {
 	flag.BoolVar(&a.FlagRandCopy, "cp", a.FlagRandCopy, usageCp)
 	flag.IntVar(&countGo, "go", 1, usageGo)
 
-	a.Pool = make(chan struct{}, countGo)
+	//a.Pool = make(chan struct{}, countGo)
 	a.SourcePath = "/home/white/Files"
 	a.HashAlgorithm = sha256.New()
 }
