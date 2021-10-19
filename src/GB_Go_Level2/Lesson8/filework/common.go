@@ -1,3 +1,6 @@
+// Package filework contains function for find duplicate file in source directory
+// files compares by hash
+// optionality user can delete all duplicate files and create random cope of files
 package filework
 
 import (
@@ -9,6 +12,7 @@ import (
 	"time"
 )
 
+// workerPool struct for management goroutines
 type workerPool struct {
 	wg            sync.WaitGroup
 	resultChan    chan FileEntity
@@ -16,14 +20,16 @@ type workerPool struct {
 	mu            sync.Mutex
 }
 
+// filesInfo struct for temporary save result of work
 type filesInfo struct {
-	allFilesList       []FileEntity
-	duplicateFilesList []FileEntity
-	deleteFilesList    []FileEntity
-	randomFilesList    []FileEntity
+	allFilesList       []FileEntity // list with all files
+	duplicateFilesList []FileEntity // list with duplicate files
+	deleteFilesList    []FileEntity // list with deleted files
+	randomFilesList    []FileEntity // list with random create files
 	directoryList      []string
 }
 
+// newWorkerPool method initialize new WorkerPool, return *workerPool
 func newWorkerPool(N int) *workerPool {
 	return &workerPool{
 		wg:            sync.WaitGroup{},
@@ -32,35 +38,37 @@ func newWorkerPool(N int) *workerPool {
 	}
 }
 
+// FileEntity struct for save file information
 type FileEntity struct {
-	OriginalFile *FileEntity
-	Create       time.Time
-	Name         string
-	Path         string
-	Hash         string
-	Size         int64
+	OriginalFile *FileEntity // pointer to original file
+	Create       time.Time   // time of create file
+	Name         string      // name of file
+	Path         string      // path to file with name of file
+	Hash         string      // hash of file
+	Size         int64       // size of file
 }
 
-// getHashOfFile method get hash of file
-func (f *FileEntity) getHashOfFile(app *config.App) error {
+// getHashOfFile method get hash of file, return error
+func (f *FileEntity) getHashOfFile(cfg *config.Config) error {
 
 	file, err := os.Open(f.Path)
 	if err != nil {
 		return err
 	}
-	defer fileClose(app, file)
+	defer fileClose(cfg, file)
 
-	app.HashAlgorithm.Reset()
-	if _, err := io.Copy(app.HashAlgorithm, file); err != nil {
+	cfg.App.HashAlgorithm.Reset()
+	if _, err := io.Copy(cfg.App.HashAlgorithm, file); err != nil {
 		return err
 	}
 
-	hashInBytes := app.HashAlgorithm.Sum(nil)
+	hashInBytes := cfg.App.HashAlgorithm.Sum(nil)
 	f.Hash = hex.EncodeToString(hashInBytes)
 
 	return nil
 }
 
+// contains method check contains file in slice of file from i position, return bool
 func (f *FileEntity) contains(fl []FileEntity, it int) bool {
 	for i := it + 1; i < len(fl); i++ {
 		if fl[i].Hash == f.Hash {
@@ -71,7 +79,8 @@ func (f *FileEntity) contains(fl []FileEntity, it int) bool {
 	return false
 }
 
-func NewFileEntity() *FileEntity {
+// newFileEntity method initialize new FileEntity, return *FileEntity
+func newFileEntity() *FileEntity {
 	return &FileEntity{
 		Create: time.Now(),
 		Name:   "",
@@ -81,17 +90,19 @@ func NewFileEntity() *FileEntity {
 	}
 }
 
-func findAllFiles(app *config.App, fInfo *filesInfo) error {
-	wp := newWorkerPool(app.CountGoroutine)
+// findAllFiles function find all files in source directory without directories, save files info in filesInfo struct, return error
+func findAllFiles(cfg *config.Config, fInfo *filesInfo) error {
+	wp := newWorkerPool(cfg.App.CountGoroutine)
 	defer wp.wg.Wait()
 
 	wp.wg.Add(1)
-	lsFiles(app.SourcePath, app, wp, fInfo)
+	lsFiles(cfg.App.SourcePath, cfg, wp, fInfo)
 
 	return nil
 }
 
-func lsFiles(dir string, app *config.App, wp *workerPool, fInfo *filesInfo) {
+// lsFiles recursive function for find files in all directories
+func lsFiles(dir string, cfg *config.Config, wp *workerPool, fInfo *filesInfo) {
 	// block while full
 	wp.semaphoreChan <- struct{}{}
 
@@ -106,14 +117,15 @@ func lsFiles(dir string, app *config.App, wp *workerPool, fInfo *filesInfo) {
 		wp.mu.Lock()
 		file, err := os.Open(dir)
 		if err != nil {
-			app.ErrorLogger.Println("error opening directory: %s\n", err)
+			cfg.App.ErrorLogger.Printf("error opening directory: %s\n", err)
 		}
 
-		defer fileClose(app, file)
+		defer fileClose(cfg, file)
 
-		files, err := file.Readdir(-1) // Loads all children files into memory.
+		// loads all children files into memory
+		files, err := file.Readdir(-1)
 		if err != nil {
-			app.ErrorLogger.Println("error reading directory: %s\n", err)
+			cfg.App.ErrorLogger.Printf("error reading directory: %s\n", err)
 		}
 
 		for _, f := range files {
@@ -121,14 +133,15 @@ func lsFiles(dir string, app *config.App, wp *workerPool, fInfo *filesInfo) {
 			if f.IsDir() {
 				fInfo.directoryList = append(fInfo.directoryList, path)
 				wp.wg.Add(1)
-				go lsFiles(path, app, wp, fInfo)
+				go lsFiles(path, cfg, wp, fInfo)
 			} else {
-				fe := NewFileEntity()
+				fe := newFileEntity()
 				fe.Name = f.Name()
 				fe.Path = path
 				fe.Create = f.ModTime()
-				if err = fe.getHashOfFile(app); err != nil {
-					app.ErrorLogger.Printf("can't get hash of file %s: %s\n", path, err)
+				// get hash of file
+				if err = fe.getHashOfFile(cfg); err != nil {
+					cfg.App.ErrorLogger.Printf("can't get hash of file %s: %s\n", path, err)
 				}
 				fe.Size = f.Size()
 				fInfo.allFilesList = append(fInfo.allFilesList, *fe)
@@ -137,19 +150,21 @@ func lsFiles(dir string, app *config.App, wp *workerPool, fInfo *filesInfo) {
 	}()
 }
 
-func fileClose(app *config.App, file *os.File) {
+// fileClose function for defer close file
+func fileClose(cfg *config.Config, file *os.File) {
 	err := file.Close()
 	if err != nil {
-		app.ErrorLogger.Printf("error on defer close file %s: %s\n", file.Name(), err)
+		cfg.App.ErrorLogger.Printf("error on defer close file %s: %s\n", file.Name(), err)
 	}
 }
 
-func byteCopy(app *config.App, source *os.File, destination *os.File) error {
-	buf := make([]byte, 1024)
+// byteCopy function for copy file by use buffer
+func byteCopy(cfg *config.Config, source *os.File, destination *os.File) error {
+	buf := make([]byte, cfg.App.SizeCopyBuffer)
 	for {
 		n, err := source.Read(buf)
 		if err != nil && err != io.EOF {
-			app.ErrorLogger.Printf("error on byte read from file: %s\n", err)
+			cfg.App.ErrorLogger.Printf("error on byte read from file: %s\n", err)
 			return err
 		}
 		if n == 0 {
@@ -157,7 +172,7 @@ func byteCopy(app *config.App, source *os.File, destination *os.File) error {
 		}
 
 		if _, err := destination.Write(buf[:n]); err != nil {
-			app.ErrorLogger.Printf("error on byte read to file: %s\n", err)
+			cfg.App.ErrorLogger.Printf("error on byte read to file: %s\n", err)
 			return err
 		}
 	}

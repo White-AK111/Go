@@ -15,25 +15,35 @@
 package main
 
 import (
-	"flag"
 	"github.com/White-AK111/GB_Go_Level2/Lesson8/config"
 	"github.com/White-AK111/GB_Go_Level2/Lesson8/filework"
+	"log"
 )
 
 func main() {
-	app := config.NewApp()
-	app.Init()
-	flag.Parse()
-
-	err := filework.DoDuplicateFiles(app)
+	// init configuration
+	cfg, err := config.Init()
 	if err != nil {
-		app.ErrorLogger.Fatalf("Error: %s", err)
+		log.Fatalf("error on load configration file: %s", err)
 	}
 
-	if app.FlagRandCopy {
-		err = filework.DoRandomCopyFiles(app)
+	// init flags
+	err = cfg.InitFlags()
+	if err != nil {
+		log.Fatalf("error on initialize flags: %s", err)
+	}
+
+	// exec function for find and delete files
+	err = filework.DoDuplicateFiles(cfg)
+	if err != nil {
+		cfg.App.ErrorLogger.Fatalf("Error on duplicate files function: %s", err)
+	}
+
+	// exec function for create random copy files
+	if cfg.App.FlagRandCopy {
+		err = filework.DoRandomCopyFiles(cfg)
 		if err != nil {
-			app.ErrorLogger.Fatalf("Error: %s", err)
+			cfg.App.ErrorLogger.Fatalf("Error on random copy files function: %s", err)
 		}
 	}
 }
