@@ -64,9 +64,9 @@ func (pGo *GoroutinePool) PrintSquaring() {
 
 // calcSquaring function increment counter by atomic function and mutex, set result squaring current counter in map and add to result channel
 func calcSquaring(pGo *GoroutinePool) {
-	pGo.mu.Lock()
-	defer pGo.mu.Unlock()
 	defer pGo.wg.Done()
+	defer pGo.mu.Unlock()
+	pGo.mu.Lock()
 
 	res := pGo.counter * pGo.counter
 	pGo.resMap[pGo.counter] = res
